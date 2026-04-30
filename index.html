@@ -1,1 +1,731 @@
-<div id="container"> <iframe id="fr" width="100%" height="100%" frameborder="0" allowfullscreen></iframe> <button class="play-button" type="button" onclick="PlayTo(this)">CLICK TO PLAY</button> <p id="unblocked-text">G+</p> <button class="fullscreen-button" type="button" onclick="openFullscreen()">FULLSCREEN</button> </div> <style> .play-button { padding: 20px 40px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 10px; font: bold 24px Arial; cursor: pointer; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; } .play-button:hover { background: #4a148c; } .fullscreen-button { padding: 10px 15px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 5px; font: bold 14px Arial; cursor: pointer; position: fixed; bottom: 20px; right: 20px; z-index: 1002; } .fullscreen-button:hover { background: #4a148c; } body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; } </style> <script> const DB_NAME = 'GameCacheDB'; const STORE_NAME = 'GameFiles'; const CACHE_DURATION = 90 * 24 * 60 * 60 * 1000; // 3 ay const FILE_URL = 'https://cdn.jsdelivr.net/gh/centerclassroom/99u99@main/1.xml'; function openDB() { return new Promise((resolve, reject) => { const request = indexedDB.open(DB_NAME, 1); request.onupgradeneeded = (event) => { const db = event.target.result; db.createObjectStore(STORE_NAME, { keyPath: 'url' }); }; request.onsuccess = (event) => resolve(event.target.result); request.onerror = (event) => reject(event.target.error); }); } async function saveToCache(url, content) { const db = await openDB(); return new Promise((resolve, reject) => { const transaction = db.transaction(STORE_NAME, 'readwrite'); const store = transaction.objectStore(STORE_NAME); const request = store.put({ url: url, content: content, timestamp: Date.now() }); request.onsuccess = () => resolve(); request.onerror = () => reject(new Error('Cache error')); }); } async function getFileFromCache(url) { const db = await openDB(); return new Promise((resolve, reject) => { const transaction = db.transaction(STORE_NAME, 'readonly'); const store = transaction.objectStore(STORE_NAME); const request = store.get(url); request.onsuccess = async (event) => { const data = event.target.result; if (data && (Date.now() - data.timestamp) < CACHE_DURATION) { resolve(data.content); } else { try { const response = await fetch(url); const text = await response.text(); await saveToCache(url, text); resolve(text); } catch (err) { reject(err); } } }; request.onerror = () => reject(new Error('DB error')); }); } function PlayTo(button) { const iframe = document.getElementById("fr"); getFileFromCache(FILE_URL).then((text) => { iframe.contentDocument.open(); iframe.contentDocument.write(text); iframe.contentDocument.close(); iframe.style.display = "block"; button.style.display = "none"; }).catch((err) => { console.error('Error:', err); alert('Oyun yüklenemedi.'); }); } function openFullscreen() { getFileFromCache(FILE_URL).then((text) => { const newWindow = window.open("", "_blank"); if (newWindow) { newWindow.document.open(); newWindow.document.write(text); newWindow.document.close(); } else { alert('Tam ekran açılamadı.'); } }).catch((err) => { console.error('Error:', err); alert('Tam ekran yüklenemedi.'); }); } </script>
+          <script>
+            var ysdk = {
+              environment: {
+                app: { id: "local" },
+                browser: { lang: "en" },
+                i18n: { lang: "en", tld: "com" },
+                payload: "",
+              },
+              deviceInfo: {
+                type: "desktop",
+                isMobile: function () {
+                  return false;
+                },
+                isDesktop: function () {
+                  return true;
+                },
+                isTablet: function () {
+                  return false;
+                },
+                isTV: function () {
+                  return false;
+                },
+              },
+              auth: {
+                openAuthDialog: function () {
+                  return Promise.resolve();
+                },
+              },
+              adv: {
+                showFullscreenAdv: function (opts) {
+                  if (opts && opts.callbacks) {
+                    if (opts.callbacks.onOpen) opts.callbacks.onOpen();
+                    setTimeout(function () {
+                      if (opts.callbacks.onClose) opts.callbacks.onClose(true);
+                      FocusGame();
+                    }, 100);
+                  }
+                },
+                showRewardedVideo: function (opts) {
+                  if (opts && opts.callbacks) {
+                    if (opts.callbacks.onOpen) opts.callbacks.onOpen();
+                    setTimeout(function () {
+                      if (opts.callbacks.onRewarded)
+                        opts.callbacks.onRewarded();
+                      if (opts.callbacks.onClose) opts.callbacks.onClose();
+                      FocusGame();
+                    }, 100);
+                  }
+                },
+                showBannerAdv: function () {
+                  return Promise.resolve();
+                },
+                hideBannerAdv: function () {
+                  return Promise.resolve();
+                },
+                getBannerAdvStatus: function () {
+                  return Promise.resolve({
+                    stickyAdvIsShowing: false,
+                    reason: "not supported",
+                  });
+                },
+              },
+              feedback: {
+                canReview: function () {
+                  return Promise.resolve({ value: false, reason: "NO_AUTH" });
+                },
+                requestReview: function () {
+                  return Promise.resolve({ feedbackSent: false });
+                },
+              },
+              clipboard: {
+                writeText: function (text) {
+                  return Promise.resolve();
+                },
+              },
+              getPlayer: function (opts) {
+                return Promise.resolve({
+                  isAuthorized: function () {
+                    return true;
+                  },
+                  getName: function () {
+                    return "LocalPlayer";
+                  },
+                  getUniqueID: function () {
+                    return "local_player_001";
+                  },
+                  getPhoto: function (size) {
+                    return "";
+                  },
+                  getPayingStatus: function () {
+                    return "unknown";
+                  },
+                  getData: function (keys) {
+                    return Promise.resolve({});
+                  },
+                  setData: function (data, flush) {
+                    return Promise.resolve();
+                  },
+                  getStats: function (keys) {
+                    return Promise.resolve({});
+                  },
+                  setStats: function (data) {
+                    return Promise.resolve();
+                  },
+                  incrementStats: function (data) {
+                    return Promise.resolve();
+                  },
+                });
+              },
+              getPayments: function () {
+                return Promise.resolve({
+                  getCatalog: function () {
+                    return Promise.resolve([]);
+                  },
+                  getPurchases: function () {
+                    return Promise.resolve([]);
+                  },
+                  purchase: function (opts) {
+                    return Promise.resolve({ purchaseToken: "stub_token" });
+                  },
+                  consumePurchase: function (token) {
+                    return Promise.resolve();
+                  },
+                });
+              },
+              leaderboards: {
+                setScore: function (name, score, extraData) {
+                  return Promise.resolve();
+                },
+                getEntries: function (name, opts) {
+                  return Promise.resolve({ entries: [], ranges: [] });
+                },
+                getDescription: function (name) {
+                  return Promise.resolve({
+                    default: false,
+                    description: {
+                      invert_sort_order: false,
+                      score_format: { options: { decimal_offset: 0 } },
+                      type: "numeric",
+                    },
+                  });
+                },
+              },
+              shortcut: {
+                canShowPrompt: function () {
+                  return Promise.resolve({ canShow: false });
+                },
+                showPrompt: function () {
+                  return Promise.resolve({ outcome: "rejected" });
+                },
+              },
+              isAvailableMethod: function (method) {
+                return Promise.resolve(false);
+              },
+              features: {
+                LoadingAPI: {
+                  ready: function () {
+                    LogStyledMessage("[Stub] ysdk.features.LoadingAPI.ready()");
+                  },
+                },
+                GameplayAPI: {
+                  start: function () {
+                    LogStyledMessage("[Stub] GameplayAPI.start()");
+                  },
+                  stop: function () {
+                    LogStyledMessage("[Stub] GameplayAPI.stop()");
+                  },
+                },
+              },
+              on: function (eventName, callback) {},
+              dispatchEvent: function (eventName) {},
+              onEvent: function (eventName, callback) {},
+              EVENTS: {},
+            };
+
+            var YaGames = {
+              init: function () {
+                return Promise.resolve(ysdk);
+              },
+            };
+            var initYSDK = true;
+            var syncInit = false;
+
+            const hideFullScreenButton = "";
+            const buildUrl =
+              "https://cdn.jsdelivr.net/gh/centerclassroom/99u99@main/Build";
+            const loaderUrl = buildUrl + "/YandexBuilde.loader.js";
+
+            const splitFiles = {
+              "YandexBuilde.data.br": 4,
+              "YandexBuilde.wasm.br": 5,
+            };
+
+            const mergedFileCache = {};
+
+            async function downloadAndMergeParts(fileName, partCount) {
+              const parts = [];
+              let totalLoaded = 0;
+              for (let i = 0; i < partCount; i++) {
+                const partUrl = buildUrl + "/parts/" + fileName + ".part" + i;
+                const response = await fetch(partUrl);
+                if (!response.ok)
+                  throw new Error(
+                    "Part indirilemedi: " +
+                      partUrl +
+                      " (HTTP " +
+                      response.status +
+                      ")",
+                  );
+                const arrayBuffer = await response.arrayBuffer();
+                parts.push(new Uint8Array(arrayBuffer));
+                totalLoaded += arrayBuffer.byteLength;
+                console.log(
+                  "  [" +
+                    fileName +
+                    "] Part " +
+                    (i + 1) +
+                    "/" +
+                    partCount +
+                    " (" +
+                    (totalLoaded / 1048576).toFixed(1) +
+                    " MB)",
+                );
+              }
+              const totalSize = parts.reduce(function (sum, p) {
+                return sum + p.length;
+              }, 0);
+              const merged = new Uint8Array(totalSize);
+              let offset = 0;
+              for (let j = 0; j < parts.length; j++) {
+                merged.set(parts[j], offset);
+                offset += parts[j].length;
+              }
+              LogStyledMessage(
+                "[Merger] " +
+                  fileName +
+                  " birlestirildi: " +
+                  (totalSize / 1048576).toFixed(1) +
+                  " MB",
+              );
+              return merged.buffer;
+            }
+
+            async function mergeAllSplitFiles() {
+              const fileNames = Object.keys(splitFiles);
+              for (let i = 0; i < fileNames.length; i++) {
+                const fileName = fileNames[i];
+                LogStyledMessage(
+                  "[Merger] " +
+                    fileName +
+                    " birlestiriliyor (" +
+                    splitFiles[fileName] +
+                    " part)...",
+                );
+                mergedFileCache[fileName] = await downloadAndMergeParts(
+                  fileName,
+                  splitFiles[fileName],
+                );
+              }
+              LogStyledMessage(
+                "[Merger] Tum dosyalar basariyla birlestirildi!",
+              );
+            }
+
+            const originalFetch = window.fetch.bind(window);
+            window.fetch = function (input, init) {
+              const url =
+                typeof input === "string"
+                  ? input
+                  : input && input.url
+                  ? input.url
+                  : "";
+              for (const name of Object.keys(mergedFileCache)) {
+                if (url.indexOf(name) !== -1 && mergedFileCache[name]) {
+                  LogStyledMessage(
+                    "[FetchOverride] " + name + " -> bellekten veriliyor",
+                  );
+                  var buf = mergedFileCache[name];
+                  return Promise.resolve(
+                    new Response(buf, {
+                      status: 200,
+                      statusText: "OK",
+                      headers: {
+                        "Content-Type": "application/octet-stream",
+                        "Content-Length": buf.byteLength.toString(),
+                      },
+                    }),
+                  );
+                }
+              }
+              return originalFetch(input, init);
+            };
+
+            const OrigXHR = window.XMLHttpRequest;
+            window.XMLHttpRequest = function PatchedXHR() {
+              const xhr = new OrigXHR();
+              const origOpen = xhr.open.bind(xhr);
+              const origSend = xhr.send.bind(xhr);
+              let interceptedFile = null;
+
+              xhr.open = function (method, url) {
+                interceptedFile = null;
+                if (typeof url === "string") {
+                  for (const name of Object.keys(mergedFileCache)) {
+                    if (url.indexOf(name) !== -1 && mergedFileCache[name]) {
+                      interceptedFile = name;
+                      break;
+                    }
+                  }
+                }
+                return origOpen.apply(xhr, arguments);
+              };
+
+              xhr.send = function (body) {
+                if (interceptedFile) {
+                  LogStyledMessage(
+                    "[XHROverride] " +
+                      interceptedFile +
+                      " -> bellekten veriliyor",
+                  );
+                  var buf = mergedFileCache[interceptedFile];
+                  Object.defineProperty(xhr, "status", {
+                    get: function () {
+                      return 200;
+                    },
+                  });
+                  Object.defineProperty(xhr, "statusText", {
+                    get: function () {
+                      return "OK";
+                    },
+                  });
+                  Object.defineProperty(xhr, "readyState", {
+                    get: function () {
+                      return 4;
+                    },
+                  });
+                  Object.defineProperty(xhr, "response", {
+                    get: function () {
+                      return buf;
+                    },
+                  });
+                  setTimeout(function () {
+                    if (xhr.onreadystatechange) xhr.onreadystatechange();
+                    if (xhr.onload) xhr.onload();
+                    try {
+                      xhr.dispatchEvent(new Event("load"));
+                    } catch (e) {}
+                    try {
+                      xhr.dispatchEvent(new Event("loadend"));
+                    } catch (e) {}
+                  }, 0);
+                  return;
+                }
+                return origSend.apply(xhr, arguments);
+              };
+
+              return xhr;
+            };
+
+            const config = {
+              dataUrl: buildUrl + "/YandexBuilde.data.br",
+              frameworkUrl: buildUrl + "/YandexBuilde.framework.js",
+              codeUrl: buildUrl + "/YandexBuilde.wasm.br",
+              streamingAssetsUrl: "StreamingAssets",
+              companyName: "AppLinkor",
+              productName: "Mini Supermarket Simulator",
+              productVersion: "0.6",
+            };
+
+            const container = document.querySelector("#unity-container");
+            const canvas = document.querySelector("#unity-canvas");
+            const loadingCover = document.querySelector("#loading-cover");
+            const progressBarEmpty = document.querySelector(
+              "#unity-progress-bar-empty",
+            );
+            const progressBarFull = document.querySelector(
+              "#unity-progress-bar-full",
+            );
+            const spinner = document.querySelector(".spinner");
+
+            const canFullscreen = (function () {
+              var keys = [
+                "exitFullscreen",
+                "webkitExitFullscreen",
+                "webkitCancelFullScreen",
+                "mozCancelFullScreen",
+                "msExitFullscreen",
+              ];
+              for (var i = 0; i < keys.length; i++) {
+                if (keys[i] in document) return true;
+              }
+              return false;
+            })();
+
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))
+              container.className = "unity-mobile";
+
+            loadingCover.style.display = "";
+
+            var StartUnityInstance;
+            var ygGameInstance = null;
+            var initGame = false;
+            var isVisibility = true;
+            var isPausedGame = false;
+            var NO_DATA = "no data";
+
+            document.addEventListener("contextmenu", function (e) {
+              e.preventDefault();
+            });
+            document.addEventListener("visibilitychange", function () {
+              SetVisibility(!document.hidden);
+            });
+            window.addEventListener("blur", function () {
+              SetVisibility(false);
+            });
+            window.addEventListener("focus", function () {
+              SetVisibility(true);
+            });
+            window.addEventListener("pointerdown", function () {
+              FocusGame();
+              SetVisibility(true);
+            });
+
+            var oRequestPointerLock = Element.prototype.requestPointerLock;
+            Element.prototype.requestPointerLock =
+              async function hkRequestPointerLock() {
+                try {
+                  var args = arguments;
+                  (args[0] ||= {}).unadjustedMovement = true;
+                  await oRequestPointerLock.apply(this, args);
+                } catch (err) {
+                  console.log(err);
+                }
+              };
+
+            function InstallBlurFocusBlocker() {
+              if (!("onblur" in document) || window.blurFocusHandlersInstalled)
+                return;
+              window.addEventListener("blur", function () {
+                var b = document.createElement("button");
+                b.style.cssText =
+                  "position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:rgba(0,0,0,0);border:none;cursor:default;";
+                document.body.appendChild(b);
+                function rm() {
+                  if (b && b.parentNode) b.parentNode.removeChild(b);
+                  window.removeEventListener("focus", rm);
+                }
+                window.addEventListener("focus", rm);
+              });
+              window.blurFocusHandlersInstalled = true;
+            }
+
+            function FocusGame() {
+              if (!isPausedGame) canvas.focus();
+            }
+
+            function SetVisibility(visibility) {
+              if (initGame === true && isVisibility !== visibility) {
+                isVisibility = visibility;
+                YG2Instance(
+                  "SetFocusWindowGame",
+                  visibility ? "true" : "false",
+                );
+              }
+            }
+
+            function YG2Instance(method, arg) {
+              if (ygGameInstance == null) return;
+              if (!initGame) {
+                setTimeout(function () {
+                  if (ygGameInstance) {
+                    if (arg !== undefined)
+                      ygGameInstance.SendMessage("YG2Instance", method, arg);
+                    else ygGameInstance.SendMessage("YG2Instance", method);
+                  }
+                }, 100);
+              } else {
+                if (arg !== undefined)
+                  ygGameInstance.SendMessage("YG2Instance", method, arg);
+                else ygGameInstance.SendMessage("YG2Instance", method);
+              }
+            }
+
+            function LogStyledMessage(message, style) {
+              console.log(
+                "%c" + message,
+                style || "color: #FFDF73; background-color: #454545",
+              );
+            }
+
+            var script = document.createElement("script");
+            script.src = loaderUrl;
+            script.onload = async function () {
+              InstallBlurFocusBlocker();
+              try {
+                LogStyledMessage("[Merger] Dosya birlestirme basliyor...");
+                await mergeAllSplitFiles();
+              } catch (err) {
+                console.error(
+                  "[Merger] KRITIK HATA - birlestirme basarisiz:",
+                  err,
+                );
+                return;
+              }
+              StartUnityInstance = function () {
+                createUnityInstance(canvas, config, function (progress) {
+                  spinner.style.display = "none";
+                  progressBarEmpty.style.display = "";
+                  progressBarFull.style.width =
+                    100 * Math.max(progress, 0.05) + "%";
+                })
+                  .then(function (unityInstance) {
+                    ygGameInstance = unityInstance;
+                    loadingCover.style.background = "";
+                    loadingCover.style.display = "none";
+                    setTimeout(function () {
+                      if (ygGameInstance)
+                        ygGameInstance.SendMessage(
+                          "YG2Instance",
+                          "InitSDKComplete",
+                        );
+                    }, 500);
+                  })
+                  .catch(function (message) {
+                    console.error(message);
+                  });
+              };
+              StartUnityInstance();
+            };
+
+            function InitGame() {
+              initGame = true;
+              setTimeout(function () {
+                if (isPausedGame) YG2Instance("SetPauseGame", "true");
+              }, 100);
+            }
+
+            LogStyledMessage(
+              "[PluginYG2 v2.007] [Build: 487] [Platform: LocalBuild - YSDK Stub]",
+            );
+
+            var cloudSaves = NO_DATA;
+
+            function SaveCloud(jsonData, flush) {
+              try {
+                localStorage.setItem("unity_cloud_save", jsonData);
+                LogStyledMessage("[Stub] Cloud Save OK");
+              } catch (e) {
+                console.warn("[Stub] SaveCloud hatasi:", e.message);
+              }
+            }
+
+            function LoadCloud() {
+              return new Promise(function (resolve) {
+                try {
+                  var saved = localStorage.getItem("unity_cloud_save");
+                  cloudSaves = saved ? JSON.stringify([saved]) : NO_DATA;
+                } catch (e) {
+                  cloudSaves = NO_DATA;
+                }
+                YG2Instance("SetLoadSaves", cloudSaves);
+                resolve(cloudSaves);
+              });
+            }
+
+            function StickyAdActivity(show) {
+              LogStyledMessage("[Stub] StickyAd(" + show + ") -> atlandi");
+              FocusGame();
+            }
+
+            function RewardedAdvShow(id) {
+              LogStyledMessage(
+                "[Stub] RewardedAdv id:" + id + " -> odul veriliyor",
+              );
+              YG2Instance("OpenRewardedAdv");
+              setTimeout(function () {
+                YG2Instance("RewardAdv", id);
+                YG2Instance("CloseRewardedAdv");
+                FocusGame();
+              }, 100);
+            }
+
+            var nowFullAdOpen = false;
+
+            function InterAdvShow() {
+              LogStyledMessage("[Stub] InterstitialAdv -> atlandi");
+              YG2Instance("OpenInterAdv");
+              setTimeout(function () {
+                YG2Instance("CloseInterAdv", "true");
+                FocusGame();
+              }, 100);
+            }
+
+            var paymentsData = NO_DATA;
+            var payments = null;
+
+            function InitPayments() {
+              return new Promise(function (resolve) {
+                var emptyPayments = {
+                  id: [],
+                  title: [],
+                  description: [],
+                  imageURI: [],
+                  price: [],
+                  priceValue: [],
+                  priceCurrencyCode: [],
+                  currencyImageURL: [],
+                  consumed: [],
+                  language: "en",
+                };
+                paymentsData = JSON.stringify(emptyPayments);
+                YG2Instance("PaymentsEntries", paymentsData);
+                LogStyledMessage("[Stub] Payments OK (bos)");
+                resolve(paymentsData);
+              });
+            }
+
+            function BuyPayments(id) {
+              LogStyledMessage("[Stub] BuyPayments: " + id);
+              YG2Instance("OnPurchaseSuccess", id);
+              FocusGame();
+            }
+            function ConsumePurchase(id, onPurchaseSuccess) {
+              if (onPurchaseSuccess) YG2Instance("OnPurchaseSuccess", id);
+            }
+            function ConsumePurchases(onPurchaseSuccess) {
+              LogStyledMessage("[Stub] ConsumePurchases -> bos");
+            }
+
+            function SetLeaderboard(name, score, extraData) {
+              LogStyledMessage(
+                "[Stub] SetLeaderboard: " + name + " = " + score,
+              );
+            }
+
+            function GetLeaderboard(
+              nameLB,
+              quantityTop,
+              quantityAround,
+              photoSize,
+              auth,
+            ) {
+              var emptyLB = {
+                technoName: nameLB,
+                isDefault: false,
+                isInvertSortOrder: false,
+                decimalOffset: 0,
+                type: "numeric",
+                entries: "no data",
+                ranks: [],
+                photos: [],
+                names: [],
+                scores: [],
+                uniqueIDs: [],
+                extraDataArray: [],
+              };
+              YG2Instance("LeaderboardEntries", JSON.stringify(emptyLB));
+            }
+
+            var environmentData = NO_DATA;
+
+            function RequestingEnvironmentData() {
+              return new Promise(function (resolve) {
+                var browser = "Chrome";
+                var ua = navigator.userAgent;
+                if (ua.indexOf("Firefox") !== -1) browser = "Firefox";
+                else if (
+                  ua.indexOf("Safari") !== -1 &&
+                  ua.indexOf("Chrome") === -1
+                )
+                  browser = "Safari";
+                else if (ua.indexOf("Edge") !== -1) browser = "Edge";
+                var jsonEnvir = {
+                  language: (navigator.language || "en").substring(0, 2),
+                  domain: "com",
+                  deviceType: "desktop",
+                  isMobile: /iPhone|iPad|iPod|Android/i.test(ua),
+                  isDesktop: !/iPhone|iPad|iPod|Android/i.test(ua),
+                  isTablet: false,
+                  isTV: false,
+                  appID: "local",
+                  browserLang: navigator.language || "en",
+                  payload: "",
+                  platform: navigator.platform,
+                  browser: browser,
+                };
+                environmentData = JSON.stringify(jsonEnvir);
+                YG2Instance("SetEnvirData", environmentData);
+                LogStyledMessage("[Stub] EnvironmentData OK");
+                resolve(environmentData);
+              });
+            }
+
+            var playerData = NO_DATA;
+            var player = null;
+
+            function InitPlayer() {
+              return new Promise(function (resolve) {
+                var authJson = {
+                  playerAuth: "resolved",
+                  playerName: "LocalPlayer",
+                  playerId: "local_player_001",
+                  playerPhoto: "",
+                  payingStatus: "unknown",
+                };
+                playerData = JSON.stringify(authJson);
+                YG2Instance("SetAuth", playerData);
+                LogStyledMessage("[Stub] Player OK (yetkili)");
+                resolve(playerData);
+              });
+            }
+
+            function OpenAuthDialog() {
+              LogStyledMessage("[Stub] OpenAuthDialog -> zaten yetkili");
+              YG2Instance("LoggedIn");
+            }
+
+            (async function StubInit() {
+              try {
+                await RequestingEnvironmentData();
+                await InitPlayer();
+                await LoadCloud();
+                await InitPayments();
+                LogStyledMessage("[Stub] Tum YSDK stub modulleri hazir");
+              } catch (e) {
+                console.error("[Stub] Init hatasi:", e);
+              }
+            })();
+
+            document.body.appendChild(script);
+          </script>
